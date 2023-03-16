@@ -1,0 +1,102 @@
+import time
+import logging
+import hashlib
+
+# define a custom exception class for payment processing errors
+class PaymentProcessingError(Exception):
+    pass
+
+# define a custom logging format
+logging.basicConfig(format='%(asctime)s - %(levelname)s - %(message)s', level=logging.INFO)
+
+class Customer:
+    def __init__(self, name, email, phone):
+        self.name = name
+        self.email = email
+        self.phone = phone
+
+    def __str__(self):
+        return self.name
+
+class StorageUnit:
+    def __init__(self, unit_number, unit_size, market_rate):
+        self.unit_number = unit_number
+        self.unit_size = unit_size
+        self.market_rate = market_rate
+        self.available = True
+
+    def __str__(self):
+        return self.unit_number
+
+class Payment:
+    def __init__(self, customer, storage_unit, payment_amount):
+        self.customer = customer
+        self.storage_unit = storage_unit
+        self.payment_amount = payment_amount
+        self.payment_status = "Pending"
+
+    def __str__(self):
+        return "{} for {} by {}".format(self.payment_amount, self.storage_unit, self.customer)
+
+class StorageUnitFacility:
+    def __init__(self, name, address):
+        self.name = name
+        self.address = address
+        self.customers = []
+        self.units = []
+        self.payments = []
+
+    def add_customer(self, name, email, phone):
+        customer = Customer(name, email, phone)
+        self.customers.append(customer)
+        logging.info("Added customer {}".format(customer))
+
+    def add_unit(self, unit_number, unit_size, market_rate):
+        unit = StorageUnit(unit_number, unit_size, market_rate)
+        self.units.append(unit)
+        logging.info("Added unit {}".format(unit))
+
+    def add_payment(self, customer, storage_unit, payment_amount):
+        payment = Payment(customer, storage_unit, payment_amount)
+        self.payments.append(payment)
+        logging.info("Added payment {}".format(payment))
+
+    def get_available_units(self):
+        return [unit for unit in self.units if unit.available]
+
+    def process_payments(self):
+        for payment in self.payments:
+            if payment.payment_status == "Pending":
+                # simulate processing the payment
+                time.sleep(1)
+                payment.payment_status = "Processed"
+                storage_unit = payment.storage_unit
+                storage_unit.available = False
+                logging.info("Processed payment of ${} for {} by {}".format(payment.payment_amount, storage_unit.unit_number, payment.customer.name))
+
+    def get_customer_by_email(self, email):
+        for customer in self.customers:
+            if customer.email == email:
+                return customer
+        return None
+
+    def get_unit_by_number(self, unit_number):
+        for unit in self.units:
+            if unit.unit_number == unit_number:
+                return unit
+        return None
+
+    def generate_access_key(self, customer_email, unit_number):
+        customer = self.get_customer_by_email(customer_email)
+        unit = self.get_unit_by_number(unit_number)
+        if customer and unit and not unit.available:
+            key_str = customer_email + unit_number + str(time.time())
+            access_key = hashlib.sha256(key_str.encode('utf-8')).hexdigest()
+            logging.info("Generated access key {} for {} by {}".format(access_key, unit_number, customer.name))
+            return access_key
+        else:
+            return None
+
+# simulate a storage unit facility with two customers and two units
+facility = StorageUnitFacility("ABC Storage", "123 Main St")
+facility.add_customer("John Doe", "johndoe
